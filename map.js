@@ -223,6 +223,81 @@ map.on('load', async () => {
     console.error('Error loading stations:', error);
   }
 
+  // Lab 7 Step 4.1: Load the CSV traffic data
+  const trafficDataUrl = "https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv";
+  let trips = [];
+
+  async function loadTrafficData() {
+      try {
+          trips = await d3.csv(trafficDataUrl, (trip) => {
+              return {
+                  ride_id: trip.ride_id,
+                  bike_type: trip.bike_type,
+                  started_at: new Date(trip.started_at),
+                  ended_at: new Date(trip.ended_at),
+                  start_station_id: trip.start_station_id,
+                  end_station_id: trip.end_station_id,
+                  is_member: +trip.is_member
+              };
+          });
+          console.log("Loaded traffic data:", trips.slice(0, 5)); // Debugging - check first few rows
+      } catch (error) {
+          console.error("Error loading traffic data:", error);
+      }
+  }
+  loadTrafficData();
+
+  // Lab 7 Step 4.2: Calculating Traffic at Each Station \
+  async function computeStationTraffic() {
+    await loadTrafficData(); // Ensure traffic data is loaded first
+
+    // Calculate departures per station
+    const departures = d3.rollup(
+        trips,
+        v => v.length,
+        d => d.start_station_id
+    );
+
+    // Calculate arrivals per station
+    const arrivals = d3.rollup(
+        trips,
+        v => v.length,
+        d => d.end_station_id
+    );
+
+    // Update stations array with traffic data
+    stations = stations.map(station => {
+        let id = station.short_name;
+        station.arrivals = arrivals.get(id) ?? 0;
+        station.departures = departures.get(id) ?? 0;
+        station.totalTraffic = station.arrivals + station.departures;
+        return station;
+    });
+
+    console.log("Updated stations with traffic data:", stations.slice(0, 5)); // Debugging
+  }
+  computeStationTraffic();
+
+  // Step 4.3: Define a square root scale for circle sizes
+  const radiusScale = d3.scaleSqrt()
+  .domain([0, d3.max(stations, d => d.totalTraffic)])
+  .range([0, 25]); // Min radius: 0, Max radius: 25
+
+  // Update the circles to reflect traffic volume
+  function updateCircleSizes() {
+  circles.attr("r", d => radiusScale(d.totalTraffic));
+  }
+
+  // Call update function once traffic data is loaded
+  computeStationTraffic().then(updateCircleSizes);
+
+  // Step 4.4: Add tooltip with trip data
+  circles.each(function(d) {
+    d3.select(this)
+        .append("title")
+        .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
+  });
+
   // Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');
 const selectedTime = document.getElementById('selected-time');

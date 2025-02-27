@@ -248,6 +248,8 @@ map.on('load', async () => {
       } catch (error) {
           console.error("Error loading traffic data:", error);
       }
+
+      preprocessTrips(); // Ensures data is pre-bucketed
   }
 
   // Lab 7 Step 4.2: Calculating Traffic at Each Station \
@@ -310,20 +312,75 @@ function formatTime(minutes) {
   return date.toLocaleString('en-US', { timeStyle: 'short' });
 }
 
+let timeFilter = -1; // Default to -1 for no filtering
 function updateTimeDisplay() {
-  let timeFilter = Number(timeSlider.value);
+    timeFilter = Number(timeSlider.value);
 
-  if (timeFilter === -1) {
-    selectedTime.textContent = '';
-    anyTimeLabel.style.display = 'block';
-  } else {
-    selectedTime.textContent = formatTime(timeFilter);
-    anyTimeLabel.style.display = 'none';
-  }
+    if (timeFilter === -1) {
+        selectedTime.textContent = '';
+        anyTimeLabel.style.display = 'block';
+    } else {
+        selectedTime.textContent = formatTime(timeFilter);
+        anyTimeLabel.style.display = 'none';
+    }
+
+    updateScatterPlot(timeFilter);
+}
+
+function updateScatterPlot(timeFilter) {
+  const filteredTrips = filterTripsByTime(trips, timeFilter);
+  const filteredStations = computeStationTraffic(stations, timeFilter);
+
+  circles
+      .data(filteredStations, d => d.short_name)
+      .join('circle')
+      .transition()
+      .duration(500)
+      .attr("r", d => radiusScale(d.totalTraffic || 1));
 }
 
 timeSlider.addEventListener('input', updateTimeDisplay);
 updateTimeDisplay();
+
+function filterTripsByTime(trips, timeFilter) {
+  return timeFilter === -1
+      ? trips
+      : trips.filter(trip => {
+          const startMin = minutesSinceMidnight(trip.started_at);
+          const endMin = minutesSinceMidnight(trip.ended_at);
+          return (
+              Math.abs(startMin - timeFilter) <= 60 ||
+              Math.abs(endMin - timeFilter) <= 60
+          );
+      });
+}
+
+let departuresByMinute = Array.from({ length: 1440 }, () => []);
+let arrivalsByMinute = Array.from({ length: 1440 }, () => []);
+
+function preprocessTrips() {
+    trips.forEach(trip => {
+        let startMinute = minutesSinceMidnight(trip.started_at);
+        let endMinute = minutesSinceMidnight(trip.ended_at);
+        departuresByMinute[startMinute].push(trip);
+        arrivalsByMinute[endMinute].push(trip);
+    });
+}
+
+function filterByMinute(tripsByMinute, minute) {
+  if (minute === -1) return tripsByMinute.flat();
+
+  let minMinute = (minute - 60 + 1440) % 1440;
+  let maxMinute = (minute + 60) % 1440;
+
+  if (minMinute > maxMinute) {
+      return [...tripsByMinute.slice(minMinute), ...tripsByMinute.slice(0, maxMinute)].flat();
+  } else {
+      return tripsByMinute.slice(minMinute, maxMinute).flat();
+  }
+}
+
+console.log("Filtered trips:", filterByMinute(departuresByMinute, timeFilter));
 
 // Lab 7 Step 6.1: Traffic Flow Legend
 const legendHTML = `

@@ -68,10 +68,12 @@ label {
 } */
 
 /* Legend Styling */
+/* Fix the legend to be centered below the map */
 .legend {
   position: absolute;
   bottom: 10px;
-  left: 10px;
+  left: 50%;
+  transform: translateX(-50%); /* Center it horizontally */
   background: white;
   padding: 10px;
   border-radius: 5px;
@@ -82,6 +84,7 @@ label {
   font-family: Arial, sans-serif;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
 }
+
 
 .legend span {
   display: flex;
@@ -101,14 +104,22 @@ label {
 .swatch.arrivals { background: darkorange; }
 
 /* Move title to the top left */
+/* Fix the title position */
 .header {
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* Aligns the title to the left */
   gap: 10px;
   padding: 10px;
+  position: absolute;
+  top: 0;
+  left: 10px;
+  width: 100%;
 }
 
+/* Ensure the title is not centered */
 .header h1 {
   margin: 0;
   font-size: 24px;
+  text-align: left;
 }

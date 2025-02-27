@@ -199,10 +199,20 @@ map.on('load', async () => {
     }
 
     function getCoords(station) {
-      const point = new mapboxgl.LngLat(+station.Long, +station.Lat);
+      const longitude = station.Long || station.long || station.Lon || station.lon;
+      const latitude = station.Lat || station.lat;
+    
+      if (!longitude || !latitude) {
+        console.warn("Invalid coordinates for station:", station);
+        return { cx: 0, cy: 0 }; // Prevents NaN errors
+      }
+    
+      const point = new mapboxgl.LngLat(+longitude, +latitude);
       const { x, y } = map.project(point);
       return { cx: x, cy: y };
-    }
+    }    
+
+    console.log("First Station:", stations[0]);
 
     updatePositions();
     map.on("move", updatePositions);
@@ -212,7 +222,7 @@ map.on('load', async () => {
   } catch (error) {
     console.error('Error loading stations:', error);
   }
-  
+
   // Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');
 const selectedTime = document.getElementById('selected-time');

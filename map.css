@@ -18,15 +18,16 @@ html, body {
 
 /* Lab 7 Step 5.1: Time Slider Styling */
 label {
-  position: absolute;
+  display: flex;
+  gap: 1em;
+  align-items: baseline;
+  margin-left: auto;
+  /* position: absolute;
   top: 10px;
   right: 10px;
   background: white;
   padding: 8px;
-  border-radius: 5px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  border-radius: 5px; */
 }
 
 /* Lab 7 Step 6.2: Legend Styling */

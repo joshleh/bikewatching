@@ -118,56 +118,101 @@ map.on('load', async () => {
     console.error("Error loading Cambridge bike lanes:", error);
   }
 
-  // Lab Step 3.1: Fetching and parsing the CSV
-    try {
-        const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
+  // // Lab Step 3.1: Fetching and parsing the CSV
+  //   try {
+  //       const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
         
-        // Await JSON fetch
-        const jsonData = await d3.json(jsonurl);
+  //       // Await JSON fetch
+  //       const jsonData = await d3.json(jsonurl);
         
-        console.log('Loaded JSON Data:', jsonData); // Log to verify structure
-    } catch (error) {
-        console.error('Error loading JSON:', error); // Handle errors
+  //       console.log('Loaded JSON Data:', jsonData); // Log to verify structure
+  //   } catch (error) {
+  //       console.error('Error loading JSON:', error); // Handle errors
+  //   }
+
+  // let stations = jsonData.data.stations;
+  // console.log('Stations Array:', stations);
+
+  // // Step 3.3: Append circles to the SVG for each station
+  // const circles = svg.selectAll('circle')
+  //   .data(stations)
+  //   .enter()
+  //   .append('circle')
+  //   .attr('r', 5)               // Radius of the circle
+  //   .attr('fill', 'steelblue')  // Circle fill color
+  //   .attr('stroke', 'white')    // Circle border color
+  //   .attr('stroke-width', 1)    // Circle border thickness
+  //   .attr('opacity', 0.8);      // Circle opacity
+
+  // // Function to update circle positions when the map moves/zooms
+  // function updatePositions() {
+  //   circles
+  //     .attr('cx', d => getCoords(d).cx)  // Set the x-position using projected coordinates
+  //     .attr('cy', d => getCoords(d).cy); // Set the y-position using projected coordinates
+  // }
+  
+  // // Lab 3.3: Additing station markers
+  // function getCoords(station) {
+  //   const point = new mapboxgl.LngLat(+station.Long, +station.Lat);  // Convert lon/lat to Mapbox LngLat
+  //   const { x, y } = map.project(point);  // Project to pixel coordinates
+  //   return { cx: x, cy: y };  // Return as object for use in SVG attributes
+  // }
+  // // Initial position update when map loads
+  // updatePositions();
+
+  // // Reposition markers on map interactions
+  // map.on('move', updatePositions);     // Update during map movement
+  // map.on('zoom', updatePositions);     // Update during zooming
+  // map.on('resize', updatePositions);   // Update on window resize
+  // map.on('moveend', updatePositions);  // Final adjustment after movement ends
+
+  // console.log(`Created ${circles.size()} station markers.`);
+  // Load Bike Station Data
+  try {
+    const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
+    const jsonData = await d3.json(jsonurl);
+    let stations = jsonData.data.stations;
+    console.log("Stations Array:", stations);
+
+    // Append Circles for Stations
+    const svg = d3.select('#map').append("svg")
+      .attr("width", "100%")
+      .attr("height", "100%")
+      .style("position", "absolute")
+      .style("z-index", "1")
+      .style("pointer-events", "none");
+
+    const circles = svg.selectAll("circle")
+      .data(stations)
+      .enter()
+      .append("circle")
+      .attr("r", 5)
+      .attr("fill", "steelblue")
+      .attr("stroke", "white")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.8);
+
+    // Function to update circle positions
+    function updatePositions() {
+      circles.attr("cx", d => getCoords(d).cx)
+             .attr("cy", d => getCoords(d).cy);
     }
 
-  let stations = jsonData.data.stations;
-  console.log('Stations Array:', stations);
+    function getCoords(station) {
+      const point = new mapboxgl.LngLat(+station.Long, +station.Lat);
+      const { x, y } = map.project(point);
+      return { cx: x, cy: y };
+    }
 
-  // Step 3.3: Append circles to the SVG for each station
-  const circles = svg.selectAll('circle')
-    .data(stations)
-    .enter()
-    .append('circle')
-    .attr('r', 5)               // Radius of the circle
-    .attr('fill', 'steelblue')  // Circle fill color
-    .attr('stroke', 'white')    // Circle border color
-    .attr('stroke-width', 1)    // Circle border thickness
-    .attr('opacity', 0.8);      // Circle opacity
-
-  // Function to update circle positions when the map moves/zooms
-  function updatePositions() {
-    circles
-      .attr('cx', d => getCoords(d).cx)  // Set the x-position using projected coordinates
-      .attr('cy', d => getCoords(d).cy); // Set the y-position using projected coordinates
+    updatePositions();
+    map.on("move", updatePositions);
+    map.on("zoom", updatePositions);
+    map.on("resize", updatePositions);
+    map.on("moveend", updatePositions);
+  } catch (error) {
+    console.error('Error loading stations:', error);
   }
   
-  // Lab 3.3: Additing station markers
-  function getCoords(station) {
-    const point = new mapboxgl.LngLat(+station.Long, +station.Lat);  // Convert lon/lat to Mapbox LngLat
-    const { x, y } = map.project(point);  // Project to pixel coordinates
-    return { cx: x, cy: y };  // Return as object for use in SVG attributes
-  }
-  // Initial position update when map loads
-  updatePositions();
-
-  // Reposition markers on map interactions
-  map.on('move', updatePositions);     // Update during map movement
-  map.on('zoom', updatePositions);     // Update during zooming
-  map.on('resize', updatePositions);   // Update on window resize
-  map.on('moveend', updatePositions);  // Final adjustment after movement ends
-
-  console.log(`Created ${circles.size()} station markers.`);
-
   // Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');
 const selectedTime = document.getElementById('selected-time');
@@ -192,6 +237,7 @@ function updateTimeDisplay() {
 
 timeSlider.addEventListener('input', updateTimeDisplay);
 updateTimeDisplay();
+});
 
 // Lab 7 Step 6.1: Traffic Flow Legend
 const legendHTML = `
@@ -203,8 +249,5 @@ const legendHTML = `
 `;
 
 document.body.insertAdjacentHTML('beforeend', legendHTML);
-});
-
-
 
 

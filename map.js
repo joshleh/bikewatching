@@ -20,6 +20,8 @@ const map = new mapboxgl.Map({
 });
 
 let stations = [];
+let trips = [];
+
 // Lab 7 Step 2.1: Load Bike Lane Data
 // map.on('load', async () => {
 //   console.log("Map has loaded!")
@@ -229,27 +231,46 @@ map.on('load', async () => {
 
   // Lab 7 Step 4.1: Load the CSV traffic data
   const trafficDataUrl = "https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv";
-  let trips = [];
 
   async function loadTrafficData() {
-      try {
-          trips = await d3.csv(trafficDataUrl, (trip) => {
-              return {
-                  ride_id: trip.ride_id,
-                  bike_type: trip.bike_type,
-                  started_at: new Date(trip.started_at),
-                  ended_at: new Date(trip.ended_at),
-                  start_station_id: trip.start_station_id,
-                  end_station_id: trip.end_station_id,
-                  is_member: +trip.is_member
-              };
-          });
-          console.log("Loaded traffic data:", trips.slice(0, 5)); // Debugging - check first few rows
-      } catch (error) {
-          console.error("Error loading traffic data:", error);
-      }
+    try {
+        trips = await d3.csv("https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv", (trip) => {
+            return {
+                ride_id: trip.ride_id,
+                bike_type: trip.bike_type,
+                started_at: new Date(trip.started_at),
+                ended_at: new Date(trip.ended_at),
+                start_station_id: trip.start_station_id,
+                end_station_id: trip.end_station_id,
+                is_member: +trip.is_member
+            };
+        });
 
-      preprocessTrips(); // Ensures data is pre-bucketed
+        console.log("Loaded traffic data:", trips.length, "entries");
+        preprocessTrips(); // Ensures data is pre-bucketed
+    } catch (error) {
+        console.error("Error loading traffic data:", error);
+    }
+  }
+
+  await loadTrafficData();
+  updateScatterPlot(timeFilter);
+  
+  function updateScatterPlot(timeFilter) {
+    if (!trips || trips.length === 0) {
+        console.warn("No trips data available, skipping updateScatterPlot.");
+        return;
+    }
+
+    const filteredTrips = filterTripsByTime(trips, timeFilter);
+    const filteredStations = computeStationTraffic(stations, timeFilter);
+
+    circles
+        .data(filteredStations, d => d.short_name)
+        .join('circle')
+        .transition()
+        .duration(500)
+        .attr("r", d => radiusScale(d.totalTraffic || 1));
   }
 
   // Lab 7 Step 4.2: Calculating Traffic at Each Station \
@@ -289,7 +310,7 @@ map.on('load', async () => {
 
     circles.transition().duration(500)
         .attr("r", d => radiusScale(d.totalTraffic || 1)); // Prevent NaN
-}
+  }
 
   function addTooltips() {
     circles.each(function (d) {
@@ -300,43 +321,34 @@ map.on('load', async () => {
         }
     });
   }
+
+  await loadTrafficData();
+  preprocessTrips();
+
+  // Lab 7 Step 5.2: Implement Time Filtering
+  const timeSlider = document.getElementById('time-slider');
+  const selectedTime = document.getElementById('selected-time');
+  const anyTimeLabel = document.getElementById('any-time');
 });
 
-// Lab 7 Step 5.2: Implement Time Filtering
-const timeSlider = document.getElementById('time-slider');
-const selectedTime = document.getElementById('selected-time');
-const anyTimeLabel = document.getElementById('any-time');
 
 function formatTime(minutes) {
   const date = new Date(0, 0, 0, 0, minutes);
   return date.toLocaleString('en-US', { timeStyle: 'short' });
 }
 
-let timeFilter = -1; // Default to -1 for no filtering
-function updateTimeDisplay() {
-    timeFilter = Number(timeSlider.value);
+async function updateTimeDisplay() { // Make function async
+  timeFilter = Number(timeSlider.value);
 
-    if (timeFilter === -1) {
-        selectedTime.textContent = '';
-        anyTimeLabel.style.display = 'block';
-    } else {
-        selectedTime.textContent = formatTime(timeFilter);
-        anyTimeLabel.style.display = 'none';
-    }
+  if (timeFilter === -1) {
+      selectedTime.textContent = '';
+      anyTimeLabel.style.display = 'block';
+  } else {
+      selectedTime.textContent = formatTime(timeFilter);
+      anyTimeLabel.style.display = 'none';
+  }
 
-    updateScatterPlot(timeFilter);
-}
-
-function updateScatterPlot(timeFilter) {
-  const filteredTrips = filterTripsByTime(trips, timeFilter);
-  const filteredStations = computeStationTraffic(stations, timeFilter);
-
-  circles
-      .data(filteredStations, d => d.short_name)
-      .join('circle')
-      .transition()
-      .duration(500)
-      .attr("r", d => radiusScale(d.totalTraffic || 1));
+  updateScatterPlot(timeFilter);
 }
 
 timeSlider.addEventListener('input', updateTimeDisplay);
@@ -381,6 +393,9 @@ function filterByMinute(tripsByMinute, minute) {
 }
 
 console.log("Filtered trips:", filterByMinute(departuresByMinute, timeFilter));
+console.log(document.getElementById('time-slider'));
+console.log(document.getElementById('selected-time'));
+console.log(document.getElementById('any-time'));
 
 // Lab 7 Step 6.1: Traffic Flow Legend
 const legendHTML = `

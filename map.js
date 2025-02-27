@@ -59,6 +59,9 @@ const map = new mapboxgl.Map({
 map.on('load', async () => {
   console.log("Map has loaded!"); // Debugging log
 
+  // Lab Step 3.3: Adding station markers
+  const svg = d3.select('#map').select('svg');
+
   // Load Boston bike lanes
   try {
     const bostonGeoJSON = await fetch('https://s3.amazonaws.com/og-production-open-data-bostonma-892364687672/resources/687847db-3296-41a7-aada-0419416ea59b/existing_bike_network_2024.geojson?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJJIENTAPKHZMIPXQ%2F20250227%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250227T014709Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=703ce22b715d0b5d915a2523359b973bb19174389be423440344babce97de707')
@@ -140,7 +143,7 @@ map.on('load', async () => {
       .attr('cx', d => getCoords(d).cx)  // Set the x-position using projected coordinates
       .attr('cy', d => getCoords(d).cy); // Set the y-position using projected coordinates
   }
-
+  
   // Initial position update when map loads
   updatePositions();
 
@@ -149,23 +152,16 @@ map.on('load', async () => {
   map.on('zoom', updatePositions);     // Update during zooming
   map.on('resize', updatePositions);   // Update on window resize
   map.on('moveend', updatePositions);  // Final adjustment after movement ends
+
+  // Lab 3.3: Additing station markers
+  function getCoords(station) {
+    const point = new mapboxgl.LngLat(+station.lon, +station.lat);  // Convert lon/lat to Mapbox LngLat
+    const { x, y } = map.project(point);  // Project to pixel coordinates
+    return { cx: x, cy: y };  // Return as object for use in SVG attributes
+}
 });
 
-// async function loadStations() {
-//   const stations = await d3.json('https://dsc106.com/labs/lab07/data/bluebikes-stations.json');
-//   console.log('Loaded Stations:', stations);
-// }
 
-// loadStations();
-
-// Lab Step 3.3: Adding station markers
-const svg = d3.select('#map').select('svg');
-
-function getCoords(station) {
-  const point = new mapboxgl.LngLat(+station.lon, +station.lat);  // Convert lon/lat to Mapbox LngLat
-  const { x, y } = map.project(point);  // Project to pixel coordinates
-  return { cx: x, cy: y };  // Return as object for use in SVG attributes
-}
 
 // Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');

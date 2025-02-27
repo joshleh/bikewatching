@@ -17,7 +17,7 @@ const map = new mapboxgl.Map({
 });
 
 // Lab 7 Step 2.1: Load Bike Lane Data
-map.on('load', () => {
+map.on('load', async () => {
   map.addSource('boston_route', {
     type: 'geojson',
     data: 'https://data.boston.gov/dataset/existing-bike-network-2022.geojson'
@@ -33,6 +33,23 @@ map.on('load', () => {
       'line-opacity': 0.4
     }
   });
+
+  // Lab Step 2.3: Adding Cambridge bike lanes
+  map.addSource('cambridge_route', {
+    type: 'geojson',
+    data: 'https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson'
+  });
+
+  map.addLayer({
+    id: 'bike-lanes',
+    type: 'line',
+    source: 'cambridge_route',
+    paint: {
+      'line-color': 'green',
+      'line-width': 3,
+      'line-opacity': 0.4
+    }
+  })
 });
 
 // Lab 7 Step 3.1: Load Bike Station Data

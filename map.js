@@ -60,7 +60,14 @@ map.on('load', async () => {
   console.log("Map has loaded!"); // Debugging log
 
   // Lab Step 3.3: Adding station markers
-  const svg = d3.select('#map').select('svg');
+  const svg = d3.select('#map')
+    .append("svg") // Ensure SVG exists
+    .attr("width", "100%")
+    .attr("height", "100%")
+    .style("position", "absolute")
+    .style("z-index", "1")
+    .style("pointer-events", "none");
+  let jsonData;
 
   // Load Boston bike lanes
   try {
@@ -111,7 +118,6 @@ map.on('load', async () => {
   }
 
   // Lab Step 3.1: Fetching and parsing the CSV
-  let jsonData;
     try {
         const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
         
@@ -144,6 +150,12 @@ map.on('load', async () => {
       .attr('cy', d => getCoords(d).cy); // Set the y-position using projected coordinates
   }
   
+  // Lab 3.3: Additing station markers
+  function getCoords(station) {
+    const point = new mapboxgl.LngLat(+station.Long, +station.Lat);  // Convert lon/lat to Mapbox LngLat
+    const { x, y } = map.project(point);  // Project to pixel coordinates
+    return { cx: x, cy: y };  // Return as object for use in SVG attributes
+  }
   // Initial position update when map loads
   updatePositions();
 
@@ -153,14 +165,8 @@ map.on('load', async () => {
   map.on('resize', updatePositions);   // Update on window resize
   map.on('moveend', updatePositions);  // Final adjustment after movement ends
 
-  // Lab 3.3: Additing station markers
-  function getCoords(station) {
-    const point = new mapboxgl.LngLat(+station.lon, +station.lat);  // Convert lon/lat to Mapbox LngLat
-    const { x, y } = map.project(point);  // Project to pixel coordinates
-    return { cx: x, cy: y };  // Return as object for use in SVG attributes
-}
+  console.log(`Created ${circles.size()} station markers.`);
 });
-
 
 
 // Lab 7 Step 5.2: Implement Time Filtering

@@ -19,6 +19,7 @@ const map = new mapboxgl.Map({
   maxZoom: 18
 });
 
+let stations = [];
 // Lab 7 Step 2.1: Load Bike Lane Data
 // map.on('load', async () => {
 //   console.log("Map has loaded!")
@@ -248,23 +249,12 @@ map.on('load', async () => {
 
   // Lab 7 Step 4.2: Calculating Traffic at Each Station \
   async function computeStationTraffic() {
-    await loadTrafficData(); // Ensure traffic data is loaded first
+    await loadTrafficData(); // Load trip data first
 
-    // Calculate departures per station
-    const departures = d3.rollup(
-        trips,
-        v => v.length,
-        d => d.start_station_id
-    );
+    const departures = d3.rollup(trips, v => v.length, d => d.start_station_id);
+    const arrivals = d3.rollup(trips, v => v.length, d => d.end_station_id);
 
-    // Calculate arrivals per station
-    const arrivals = d3.rollup(
-        trips,
-        v => v.length,
-        d => d.end_station_id
-    );
-
-    // Update stations array with traffic data
+    // Update stations with computed traffic data
     stations = stations.map(station => {
         let id = station.short_name;
         station.arrivals = arrivals.get(id) ?? 0;
@@ -275,9 +265,9 @@ map.on('load', async () => {
 
     console.log("Updated stations with traffic data:", stations.slice(0, 5)); // Debugging
 
-    updateCircleSizes();
-    addTooltips();
-  }
+    updateCircleSizes(); 
+    addTooltips(); 
+}
 
   // Step 4.3: Define a square root scale for circle sizes
   function updateCircleSizes() {
@@ -286,29 +276,28 @@ map.on('load', async () => {
         return;
     }
 
-    const maxTraffic = d3.max(stations, d => d.totalTraffic || 0); // Prevent NaN
+    const maxTraffic = d3.max(stations, d => d.totalTraffic || 1); // Prevents NaN
 
     const radiusScale = d3.scaleSqrt()
         .domain([0, maxTraffic])
         .range([2, 25]); // Min radius 2, Max radius 25
 
     circles.transition().duration(500)
-        .attr("r", d => radiusScale(d.totalTraffic || 0)); // Prevent NaN
-  }
+        .attr("r", d => radiusScale(d.totalTraffic || 1)); // Prevent NaN
+}
 
-  // 🚀 Step 4.4: Adding Tooltips with Exact Traffic Numbers
   function addTooltips() {
     circles.each(function (d) {
-        if (d.totalTraffic > 0) { // Only show tooltips for active stations
+        if (d.totalTraffic > 0) { // ✅ Show only for stations with trips
             d3.select(this)
                 .append("title")
                 .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
         }
     });
   }
+});
 
-
-  // Lab 7 Step 5.2: Implement Time Filtering
+// Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');
 const selectedTime = document.getElementById('selected-time');
 const anyTimeLabel = document.getElementById('any-time');
@@ -332,7 +321,6 @@ function updateTimeDisplay() {
 
 timeSlider.addEventListener('input', updateTimeDisplay);
 updateTimeDisplay();
-});
 
 // Lab 7 Step 6.1: Traffic Flow Legend
 const legendHTML = `

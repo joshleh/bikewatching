@@ -58,7 +58,7 @@ map.on('load', async () => {
 
   // Load Boston bike lanes
   try {
-    const bostonGeoJSON = await fetch('https://data.boston.gov/dataset/1fcbf650-f47a-4d84-9b64-b7f9b39390d1/resource/1fcbf650-f47a-4d84-9b64-b7f9b39390d1/download/existing-bike-network-2022.geojson')
+    const bostonGeoJSON = await fetch('https://s3.amazonaws.com/og-production-open-data-bostonma-892364687672/resources/687847db-3296-41a7-aada-0419416ea59b/existing_bike_network_2024.geojson?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJJIENTAPKHZMIPXQ%2F20250227%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250227T014709Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=703ce22b715d0b5d915a2523359b973bb19174389be423440344babce97de707')
       .then(response => response.json());
     
     map.addSource('boston_bike_lanes', {

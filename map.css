@@ -1,9 +1,12 @@
 /* Lab 7 Step 1.2: Map Styling */
 html, body {
   margin: 0;
-  padding: 0;
+  padding: 5;
   height: 100%;
   width: 100%;
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center;     /* Center vertically */
 }
 
 #map {

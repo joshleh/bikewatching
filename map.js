@@ -17,39 +17,92 @@ const map = new mapboxgl.Map({
 });
 
 // Lab 7 Step 2.1: Load Bike Lane Data
+// map.on('load', async () => {
+//   console.log("Map has loaded!")
+
+//   map.addSource('boston_route', {
+//     type: 'geojson',
+//     data: 'https://data.boston.gov/dataset/existing-bike-network-2022.geojson'
+//   });
+
+//   map.addLayer({
+//     id: 'boston-bike-lanes',
+//     type: 'line',
+//     source: 'boston_route',
+//     paint: {
+//       'line-color': 'green',
+//       'line-width': 3,
+//       'line-opacity': 0.4
+//     }
+//   });
+
+//   // Lab Step 2.3: Adding Cambridge bike lanes
+//   map.addSource('cambridge_route', {
+//     type: 'geojson',
+//     data: 'https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson'
+//   });
+
+//   map.addLayer({
+//     id: 'cambridge-bike-lanes',
+//     type: 'line',
+//     source: 'cambridge_route',
+//     paint: {
+//       'line-color': 'green',
+//       'line-width': 3,
+//       'line-opacity': 0.4
+//     }
+//   })
+// });
 map.on('load', async () => {
-  map.addSource('boston_route', {
-    type: 'geojson',
-    data: 'https://data.boston.gov/dataset/existing-bike-network-2022.geojson'
-  });
+  console.log("Map has loaded!"); // Debugging log
 
-  map.addLayer({
-    id: 'bike-lanes',
-    type: 'line',
-    source: 'boston_route',
-    paint: {
-      'line-color': 'green',
-      'line-width': 3,
-      'line-opacity': 0.4
-    }
-  });
+  // Load Boston bike lanes
+  try {
+    const bostonGeoJSON = await fetch('https://data.boston.gov/dataset/1fcbf650-f47a-4d84-9b64-b7f9b39390d1/resource/1fcbf650-f47a-4d84-9b64-b7f9b39390d1/download/existing-bike-network-2022.geojson')
+      .then(response => response.json());
+    
+    map.addSource('boston_bike_lanes', {
+      type: 'geojson',
+      data: bostonGeoJSON
+    });
 
-  // Lab Step 2.3: Adding Cambridge bike lanes
-  map.addSource('cambridge_route', {
-    type: 'geojson',
-    data: 'https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson'
-  });
+    map.addLayer({
+      id: 'boston-bike-lanes',
+      type: 'line',
+      source: 'boston_bike_lanes',
+      paint: {
+        'line-color': 'green',
+        'line-width': 3,
+        'line-opacity': 0.6
+      }
+    });
+  } catch (error) {
+    console.error("Error loading Boston bike lanes:", error);
+  }
 
-  map.addLayer({
-    id: 'bike-lanes',
-    type: 'line',
-    source: 'cambridge_route',
-    paint: {
-      'line-color': 'green',
-      'line-width': 3,
-      'line-opacity': 0.4
-    }
-  })
+  // Load Cambridge bike lanes
+  try {
+    const cambridgeGeoJSON = await fetch('https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson')
+      .then(response => response.json());
+
+    map.addSource('cambridge_bike_lanes', {
+      type: 'geojson',
+      data: cambridgeGeoJSON
+    });
+
+    map.addLayer({
+      id: 'cambridge-bike-lanes',
+      type: 'line',
+      source: 'cambridge_bike_lanes',
+      paint: {
+        'line-color': 'blue',
+        'line-width': 3,
+        'line-opacity': 0.6
+      }
+    });
+  } catch (error) {
+    console.error("Error loading Cambridge bike lanes:", error);
+  }
 });
 
 // Lab 7 Step 3.1: Load Bike Station Data

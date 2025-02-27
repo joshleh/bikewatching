@@ -67,6 +67,7 @@ map.on('load', async () => {
     .style("position", "absolute")
     .style("z-index", "1")
     .style("pointer-events", "none");
+
   let jsonData;
 
   // Load Boston bike lanes
@@ -166,10 +167,8 @@ map.on('load', async () => {
   map.on('moveend', updatePositions);  // Final adjustment after movement ends
 
   console.log(`Created ${circles.size()} station markers.`);
-});
 
-
-// Lab 7 Step 5.2: Implement Time Filtering
+  // Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');
 const selectedTime = document.getElementById('selected-time');
 const anyTimeLabel = document.getElementById('any-time');
@@ -204,4 +203,8 @@ const legendHTML = `
 `;
 
 document.body.insertAdjacentHTML('beforeend', legendHTML);
+});
+
+
+
 

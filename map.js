@@ -1,3 +1,9 @@
+// Lab Step 1.1: Check that Mapbox GL JS is loaded
+console.log("Mapbox GL JS Loaded:", mapboxgl);
+
+// Import Mapbox as an ESM module
+import mapboxgl from 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/+esm';
+
 // Lab 7 Step 1.3: Initialize the Mapbox Map
 mapboxgl.accessToken = 'pk.eyJ1Ijoiam9zaHVhZG1sZWUiLCJhIjoiY203ZmI0eTRvMDBjajJqcHpmeWM1MGd4NiJ9.0TlBIhJdBvvYzAgcNpwcMA'; // Replace with your token
 

@@ -16,6 +16,17 @@ html, body {
   border-radius: 8px;
 }
 
+/* Lab 7 Step 3.2: Overlaying SVG on the map */
+#map svg {
+  background: yellow;
+  opacity: 50%;
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 /* Lab 7 Step 5.1: Time Slider Styling */
 label {
   display: flex;

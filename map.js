@@ -4,6 +4,9 @@ console.log("Mapbox GL JS Loaded:", mapboxgl);
 // Import Mapbox as an ESM module
 import mapboxgl from 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/+esm';
 
+// Lab 7 Step 3.0: Load Bike Station Data
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm';
+
 // Lab 7 Step 1.3: Initialize the Mapbox Map
 mapboxgl.accessToken = 'pk.eyJ1Ijoiam9zaHVhZG1sZWUiLCJhIjoiY203ZmI0eTRvMDBjajJqcHpmeWM1MGd4NiJ9.0TlBIhJdBvvYzAgcNpwcMA'; // Replace with your token
 
@@ -103,17 +106,30 @@ map.on('load', async () => {
   } catch (error) {
     console.error("Error loading Cambridge bike lanes:", error);
   }
+
+  // Lab Step 3.1: Fetching and parsing the CSV
+  let jsonData;
+    try {
+        const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
+        
+        // Await JSON fetch
+        const jsonData = await d3.json(jsonurl);
+        
+        console.log('Loaded JSON Data:', jsonData); // Log to verify structure
+    } catch (error) {
+        console.error('Error loading JSON:', error); // Handle errors
+    }
+
+  let stations = jsonData.data.stations;
+  console.log('Stations Array:', stations);
 });
 
-// Lab 7 Step 3.1: Load Bike Station Data
-import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm';
+// async function loadStations() {
+//   const stations = await d3.json('https://dsc106.com/labs/lab07/data/bluebikes-stations.json');
+//   console.log('Loaded Stations:', stations);
+// }
 
-async function loadStations() {
-  const stations = await d3.json('https://dsc106.com/labs/lab07/data/bluebikes-stations.json');
-  console.log('Loaded Stations:', stations);
-}
-
-loadStations();
+// loadStations();
 
 // Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');

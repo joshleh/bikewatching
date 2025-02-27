@@ -169,132 +169,273 @@ map.on('load', async () => {
 
   // console.log(`Created ${circles.size()} station markers.`);
   // Load Bike Station Data
-  try {
-    const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
-    const jsonData = await d3.json(jsonurl);
-    let stations = jsonData.data.stations;
-    console.log("Stations Array:", stations);
 
-    // Append Circles for Stations
-    const svg = d3.select('#map').append("svg")
+  ////////////////////////////////////
+
+//   try {
+//     const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
+//     const jsonData = await d3.json(jsonurl);
+//     let stations = jsonData.data.stations;
+//     console.log("Stations Array:", stations);
+
+//     // Append Circles for Stations
+//     const svg = d3.select('#map').append("svg")
+//       .attr("width", "100%")
+//       .attr("height", "100%")
+//       .style("position", "absolute")
+//       .style("z-index", "1")
+//       .style("pointer-events", "none");
+
+//     const circles = svg.selectAll("circle")
+//       .data(stations)
+//       .enter()
+//       .append("circle")
+//       .attr("r", 5)
+//       .attr("fill", "steelblue")
+//       .attr("stroke", "white")
+//       .attr("stroke-width", 1)
+//       .attr("opacity", 0.8);
+
+//     // Function to update circle positions
+//     function updatePositions() {
+//       circles.attr("cx", d => getCoords(d).cx)
+//              .attr("cy", d => getCoords(d).cy);
+//     }
+
+//     function getCoords(station) {
+//       const longitude = station.Long || station.long || station.Lon || station.lon;
+//       const latitude = station.Lat || station.lat;
+    
+//       if (!longitude || !latitude) {
+//         console.warn("Invalid coordinates for station:", station);
+//         return { cx: 0, cy: 0 }; // Prevents NaN errors
+//       }
+    
+//       const point = new mapboxgl.LngLat(+longitude, +latitude);
+//       const { x, y } = map.project(point);
+//       return { cx: x, cy: y };
+//     }    
+
+//     console.log("First Station:", stations[0]);
+
+//     updatePositions();
+//     map.on("move", updatePositions);
+//     map.on("zoom", updatePositions);
+//     map.on("resize", updatePositions);
+//     map.on("moveend", updatePositions);
+//   } catch (error) {
+//     console.error('Error loading stations:', error);
+//   }
+
+//   // Lab 7 Step 4.1: Load the CSV traffic data
+//   const trafficDataUrl = "https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv";
+//   let trips = [];
+
+//   async function loadTrafficData() {
+//       try {
+//           trips = await d3.csv(trafficDataUrl, (trip) => {
+//               return {
+//                   ride_id: trip.ride_id,
+//                   bike_type: trip.bike_type,
+//                   started_at: new Date(trip.started_at),
+//                   ended_at: new Date(trip.ended_at),
+//                   start_station_id: trip.start_station_id,
+//                   end_station_id: trip.end_station_id,
+//                   is_member: +trip.is_member
+//               };
+//           });
+//           console.log("Loaded traffic data:", trips.slice(0, 5)); // Debugging - check first few rows
+//       } catch (error) {
+//           console.error("Error loading traffic data:", error);
+//       }
+//   }
+
+//   // Lab 7 Step 4.2: Calculating Traffic at Each Station \
+//   async function computeStationTraffic() {
+//     await loadTrafficData(); // Load trip data first
+
+//     const departures = d3.rollup(trips, v => v.length, d => d.start_station_id);
+//     const arrivals = d3.rollup(trips, v => v.length, d => d.end_station_id);
+
+//     // Update stations with computed traffic data
+//     stations = stations.map(station => {
+//         let id = station.short_name;
+//         station.arrivals = arrivals.get(id) ?? 0;
+//         station.departures = departures.get(id) ?? 0;
+//         station.totalTraffic = station.arrivals + station.departures;
+//         return station;
+//     });
+
+//     console.log("Updated stations with traffic data:", stations.slice(0, 5)); // Debugging
+
+//     updateCircleSizes(); 
+//     addTooltips(); 
+// }
+
+//   // Step 4.3: Define a square root scale for circle sizes
+//   function updateCircleSizes() {
+//     if (!stations || stations.length === 0) {
+//         console.warn("Stations data is empty, skipping size updates.");
+//         return;
+//     }
+
+//     const maxTraffic = d3.max(stations, d => d.totalTraffic || 1); // Prevents NaN
+
+//     const radiusScale = d3.scaleSqrt()
+//         .domain([0, maxTraffic])
+//         .range([2, 25]); // Min radius 2, Max radius 25
+
+//     circles.transition().duration(500)
+//         .attr("r", d => radiusScale(d.totalTraffic || 1)); // Prevent NaN
+// }
+
+//   function addTooltips() {
+//     circles.each(function (d) {
+//         if (d.totalTraffic > 0) { // ✅ Show only for stations with trips
+//             d3.select(this)
+//                 .append("title")
+//                 .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
+//         }
+//     });
+//   }
+// });
+
+// 🚲 Load Bike Station Data
+async function loadStations() {
+  try {
+      const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
+      const jsonData = await d3.json(jsonurl);
+      stations = jsonData.data.stations;
+      console.log("Stations Loaded:", stations.length);
+
+      // Compute Traffic Data after loading stations
+      await computeStationTraffic(); 
+
+      // Add SVG Circles to Represent Stations
+      addStationMarkers();
+  } catch (error) {
+      console.error("Error loading stations:", error);
+  }
+}
+
+// 🚲 Load Traffic Data
+async function loadTrafficData() {
+  try {
+      const trafficDataUrl = "https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv";
+      trips = await d3.csv(trafficDataUrl, (trip) => ({
+          ride_id: trip.ride_id,
+          bike_type: trip.bike_type,
+          started_at: new Date(trip.started_at),
+          ended_at: new Date(trip.ended_at),
+          start_station_id: trip.start_station_id,
+          end_station_id: trip.end_station_id,
+          is_member: +trip.is_member
+      }));
+      console.log("Traffic Data Loaded:", trips.length);
+  } catch (error) {
+      console.error("Error loading traffic data:", error);
+  }
+}
+
+// 🚲 Compute Traffic Data Per Station
+async function computeStationTraffic() {
+  await loadTrafficData();
+
+  const departures = d3.rollup(trips, v => v.length, d => d.start_station_id);
+  const arrivals = d3.rollup(trips, v => v.length, d => d.end_station_id);
+
+  stations = stations.map(station => {
+      let id = station.short_name;
+      station.arrivals = arrivals.get(id) ?? 0;
+      station.departures = departures.get(id) ?? 0;
+      station.totalTraffic = station.arrivals + station.departures;
+      return station;
+  });
+
+  console.log("Updated Stations with Traffic:", stations.slice(0, 5));
+
+  updateCircleSizes();
+  addTooltips();
+}
+
+// 🚲 Add SVG Circles to Represent Stations
+function addStationMarkers() {
+  const svg = d3.select('#map').append("svg")
       .attr("width", "100%")
       .attr("height", "100%")
       .style("position", "absolute")
       .style("z-index", "1")
       .style("pointer-events", "none");
 
-    const circles = svg.selectAll("circle")
+  const circles = svg.selectAll("circle")
       .data(stations)
       .enter()
       .append("circle")
-      .attr("r", 5)
       .attr("fill", "steelblue")
       .attr("stroke", "white")
       .attr("stroke-width", 1)
-      .attr("opacity", 0.8);
+      .attr("opacity", 0.6)
+      .attr("pointer-events", "auto");
 
-    // Function to update circle positions
-    function updatePositions() {
-      circles.attr("cx", d => getCoords(d).cx)
-             .attr("cy", d => getCoords(d).cy);
-    }
+  function updatePositions() {
+      circles
+          .attr("cx", d => getCoords(d).cx)
+          .attr("cy", d => getCoords(d).cy);
+  }
 
-    function getCoords(station) {
+  function getCoords(station) {
       const longitude = station.Long || station.long || station.Lon || station.lon;
       const latitude = station.Lat || station.lat;
-    
+
       if (!longitude || !latitude) {
-        console.warn("Invalid coordinates for station:", station);
-        return { cx: 0, cy: 0 }; // Prevents NaN errors
+          console.warn("Invalid coordinates for station:", station);
+          return { cx: 0, cy: 0 }; 
       }
-    
+
       const point = new mapboxgl.LngLat(+longitude, +latitude);
       const { x, y } = map.project(point);
       return { cx: x, cy: y };
-    }    
-
-    console.log("First Station:", stations[0]);
-
-    updatePositions();
-    map.on("move", updatePositions);
-    map.on("zoom", updatePositions);
-    map.on("resize", updatePositions);
-    map.on("moveend", updatePositions);
-  } catch (error) {
-    console.error('Error loading stations:', error);
   }
 
-  // Lab 7 Step 4.1: Load the CSV traffic data
-  const trafficDataUrl = "https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv";
-  let trips = [];
-
-  async function loadTrafficData() {
-      try {
-          trips = await d3.csv(trafficDataUrl, (trip) => {
-              return {
-                  ride_id: trip.ride_id,
-                  bike_type: trip.bike_type,
-                  started_at: new Date(trip.started_at),
-                  ended_at: new Date(trip.ended_at),
-                  start_station_id: trip.start_station_id,
-                  end_station_id: trip.end_station_id,
-                  is_member: +trip.is_member
-              };
-          });
-          console.log("Loaded traffic data:", trips.slice(0, 5)); // Debugging - check first few rows
-      } catch (error) {
-          console.error("Error loading traffic data:", error);
-      }
-  }
-
-  // Lab 7 Step 4.2: Calculating Traffic at Each Station \
-  async function computeStationTraffic() {
-    await loadTrafficData(); // Load trip data first
-
-    const departures = d3.rollup(trips, v => v.length, d => d.start_station_id);
-    const arrivals = d3.rollup(trips, v => v.length, d => d.end_station_id);
-
-    // Update stations with computed traffic data
-    stations = stations.map(station => {
-        let id = station.short_name;
-        station.arrivals = arrivals.get(id) ?? 0;
-        station.departures = departures.get(id) ?? 0;
-        station.totalTraffic = station.arrivals + station.departures;
-        return station;
-    });
-
-    console.log("Updated stations with traffic data:", stations.slice(0, 5)); // Debugging
-
-    updateCircleSizes(); 
-    addTooltips(); 
+  updatePositions();
+  map.on("move", updatePositions);
+  map.on("zoom", updatePositions);
+  map.on("resize", updatePositions);
 }
 
-  // Step 4.3: Define a square root scale for circle sizes
-  function updateCircleSizes() {
-    if (!stations || stations.length === 0) {
-        console.warn("Stations data is empty, skipping size updates.");
-        return;
-    }
+// 🚲 Update Circle Sizes Based on Traffic
+function updateCircleSizes() {
+  if (!stations || stations.length === 0) {
+      console.warn("Stations data is empty, skipping size updates.");
+      return;
+  }
 
-    const maxTraffic = d3.max(stations, d => d.totalTraffic || 1); // Prevents NaN
+  const maxTraffic = d3.max(stations, d => d.totalTraffic || 1);
 
-    const radiusScale = d3.scaleSqrt()
-        .domain([0, maxTraffic])
-        .range([2, 25]); // Min radius 2, Max radius 25
+  const radiusScale = d3.scaleSqrt()
+      .domain([0, maxTraffic])
+      .range([2, 25]);
 
-    circles.transition().duration(500)
-        .attr("r", d => radiusScale(d.totalTraffic || 1)); // Prevent NaN
+  d3.selectAll("circle").transition().duration(500)
+      .attr("r", d => radiusScale(d.totalTraffic || 1));
 }
 
-  function addTooltips() {
-    circles.each(function (d) {
-        if (d.totalTraffic > 0) { // ✅ Show only for stations with trips
-            d3.select(this)
-                .append("title")
-                .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
-        }
-    });
-  }
+// 🚲 Add Tooltips to Show Traffic Info
+function addTooltips() {
+  d3.selectAll("circle")
+      .each(function (d) {
+          if (d.totalTraffic > 0) {
+              d3.select(this)
+                  .append("title")
+                  .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
+          }
+      });
+}
+
+// 🚲 Load Everything Once Map is Ready
+map.on('load', async () => {
+  console.log("Map Loaded!");
+  await loadStations();
 });
 
 // Lab 7 Step 5.2: Implement Time Filtering

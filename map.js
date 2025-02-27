@@ -245,7 +245,6 @@ map.on('load', async () => {
           console.error("Error loading traffic data:", error);
       }
   }
-  loadTrafficData();
 
   // Lab 7 Step 4.2: Calculating Traffic at Each Station \
   async function computeStationTraffic() {
@@ -275,28 +274,39 @@ map.on('load', async () => {
     });
 
     console.log("Updated stations with traffic data:", stations.slice(0, 5)); // Debugging
+
+    updateCircleSizes();
+    addTooltips();
   }
-  computeStationTraffic();
 
   // Step 4.3: Define a square root scale for circle sizes
-  const radiusScale = d3.scaleSqrt()
-  .domain([0, d3.max(stations, d => d.totalTraffic)])
-  .range([0, 25]); // Min radius: 0, Max radius: 25
-
-  // Update the circles to reflect traffic volume
   function updateCircleSizes() {
-  circles.attr("r", d => radiusScale(d.totalTraffic));
+    if (!stations || stations.length === 0) {
+        console.warn("Stations data is empty, skipping size updates.");
+        return;
+    }
+
+    const maxTraffic = d3.max(stations, d => d.totalTraffic || 0); // Prevent NaN
+
+    const radiusScale = d3.scaleSqrt()
+        .domain([0, maxTraffic])
+        .range([2, 25]); // Min radius 2, Max radius 25
+
+    circles.transition().duration(500)
+        .attr("r", d => radiusScale(d.totalTraffic || 0)); // Prevent NaN
   }
 
-  // Call update function once traffic data is loaded
-  computeStationTraffic().then(updateCircleSizes);
+  // 🚀 Step 4.4: Adding Tooltips with Exact Traffic Numbers
+  function addTooltips() {
+    circles.each(function (d) {
+        if (d.totalTraffic > 0) { // Only show tooltips for active stations
+            d3.select(this)
+                .append("title")
+                .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
+        }
+    });
+  }
 
-  // Step 4.4: Add tooltip with trip data
-  circles.each(function(d) {
-    d3.select(this)
-        .append("title")
-        .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
-  });
 
   // Lab 7 Step 5.2: Implement Time Filtering
 const timeSlider = document.getElementById('time-slider');

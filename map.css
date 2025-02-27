@@ -25,6 +25,15 @@ html, body {
   pointer-events: none;
 }
 
+/* 🚲 Step 4.3: Improve circle styling */
+#map svg circle {
+  fill: steelblue;
+  fill-opacity: 0.6;
+  stroke: white;
+  stroke-width: 1px;
+  pointer-events: auto;
+}
+
 /* Lab 7 Step 5.1: Time Slider Styling */
 label {
   display: flex;
